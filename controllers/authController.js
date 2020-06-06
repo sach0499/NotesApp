@@ -4,12 +4,14 @@ const sendEmail = require('./../utils/email');
 
 exports.signUp = async (req, res, next) => {
   try {
+    console.log(req.body.name);
     const newUser = await User.create({
       name: req.body.name,
       email: req.body.email,
       password: req.body.password,
       confirmPassword: req.body.confirmPassword,
     });
+    console.log(newUser);
 
     const token = newUser.createJWT();
     return res.status(201).json({

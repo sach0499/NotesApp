@@ -17,6 +17,7 @@ router.route('/resetPassword/:token').patch(authController.resetPassword);
 // get all the users
 router.route('/').get(userController.getAllUsers);
 
+
 module.exports = router;
 
 /*
