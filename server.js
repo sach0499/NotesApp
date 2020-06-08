@@ -177,40 +177,6 @@ app.post('/addbook', upload.array('images', 6), async function(req, res) {
   }
 });
 
-
-//add notes routes 
-
-app.post("/addnotes",upload.single("file"), function(req,res){
-
-  let note=req.body.note;
-    note.author={
-      id:req.user._id,
-      username:req.user.name
-    }
-  cloudinary.uploader.upload(req.file.path, function(err,result) {
-   
-    note.fileLink=result.secure_url;
-    Notes.create(note,function(err,note){
-      if(err)
-      {
-        console.log(err);
-        return res.status(400).json({
-          status: 'failure',
-          message: err.message,
-        });
-      }
-      else
-      {
-        console.log(note);
-        return res.status(200).json({
-          status: 'success',
-          message: "Done"
-        });
-      }
-    });
-  });
-});
-
 // creating comment route for book
 
 app.post("/book/:id/comment",function(req,res){
@@ -249,6 +215,27 @@ app.post("/book/:id/comment",function(req,res){
   });
 });
 
+//deleting book
+
+app.delete("/book/:id",function(req,res){
+
+  Book.findByIdAndRemove(req.params.id,function(err,book){
+    if(err){
+      return res.status(400).json({
+        status: 'failure',
+        message: err.message,
+      });
+		}
+		else{
+			return res.status(200).json({
+        status: 'success',
+        message: 'Done',
+      });
+		}
+  });
+
+});
+
 //reviews delete route for book
 
 app.delete("/book/:id/comments/:comment_id",function(req, res){
@@ -267,6 +254,41 @@ app.delete("/book/:id/comments/:comment_id",function(req, res){
 		}
 	
 });
+});
+
+//==========Notes Routes=================
+
+//add notes routes 
+
+app.post("/addnotes",upload.single("file"), function(req,res){
+
+  let note=req.body.note;
+    note.author={
+      id:req.user._id,
+      username:req.user.name
+    }
+  cloudinary.uploader.upload(req.file.path, function(err,result) {
+   
+    note.fileLink=result.secure_url;
+    Notes.create(note,function(err,note){
+      if(err)
+      {
+        console.log(err);
+        return res.status(400).json({
+          status: 'failure',
+          message: err.message,
+        });
+      }
+      else
+      {
+        console.log(note);
+        return res.status(200).json({
+          status: 'success',
+          message: "Done"
+        });
+      }
+    });
+  });
 });
 
 // creating comment route for notes
@@ -307,8 +329,28 @@ app.post("/notes/:id/comment",function(req,res){
   });
 });
 
+//deleting Notes
 
-//reviews delete route for book
+app.delete("/book/:id",function(req,res){
+
+  Notes.findByIdAndRemove(req.params.id,function(err,book){
+    if(err){
+      return res.status(400).json({
+        status: 'failure',
+        message: err.message,
+      });
+		}
+		else{
+			return res.status(200).json({
+        status: 'success',
+        message: 'Done',
+      });
+		}
+  });
+
+});
+
+//reviews delete route for notes
 
 app.delete("/notes/:id/comments/:comment_id",function(req, res){
 	
