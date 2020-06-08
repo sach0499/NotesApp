@@ -14,15 +14,19 @@ exports.signUp = async (req, res, next) => {
     console.log(newUser);
 
     const token = newUser.createJWT();
-    return res.status(201).json({
+    req.flash("success","Welcome to NotesApp "+req.user.name);
+    res.redirect("/");
+    /*return res.status(201).json({
       status: 'success',
       token: token,
-    });
+    });*/
   } catch (err) {
-    return res.status(400).json({
+    /*return res.status(400).json({
       status: 'failure',
       message: err.message,
-    });
+    });*/
+    req.flash("error",err.message+"");
+    res.redirect("/");
   }
 };
 
@@ -39,21 +43,29 @@ exports.login = async (req, res, next) => {
     const user = await User.findOne({ email }).select('+password');
 
     if (!user || !(await user.checkPassword(password))) {
-      throw new Error('Incorrect email or password!');
+      //throw new Error('Incorrect email or password!');
+      req.flash("error","Incorrect email or password!");
+      res.redirect("/");
     }
 
     // 3. If everything is okay send JWT
     const token = user.createJWT();
 
-    res.status(200).json({
+   /* res.status(200).json({
       status: 'success',
       token,
-    });
+    });*/
+
+    req.flash("success","Welcome to NotesApp! "+req.user.name);
+      res.redirect("/");
+
   } catch (err) {
-    return res.status(400).json({
+    /*return res.status(400).json({
       status: 'failure',
       message: err.message,
-    });
+    });*/
+    req.flash("error",err.message+"");
+    res.redirect("/");
   }
 };
 
