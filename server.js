@@ -8,6 +8,8 @@ const methodOverride = require('method-override');
 const cloudinary = require('cloudinary').v2;
 
 const userRouter = require('./routers/userRouter');
+const userController = require('./../controllers/userController');
+const authController = require('./../controllers/authController');
 
 //models
 const User = require('./models/userModel');
@@ -108,7 +110,7 @@ app.use('/api/v1/users', userRouter);
 //creating routes for different purposes
 
 //add book routes
-app.post('/addbook', upload.array('images', 6), async function(req, res) {
+app.post('/addbook', authController.protectRoute, upload.array('images', 6), async function(req, res) {
   try {
     var filePaths = req.files.map(file => file.path);
     var upload_res = new Array();
@@ -179,7 +181,7 @@ app.post('/addbook', upload.array('images', 6), async function(req, res) {
 
 // creating comment route for book
 
-app.post("/book/:id/comment",function(req,res){
+app.post("/book/:id/comment", authController.protectRoute,function(req,res){
 
   Book.findById(req.params.id,function(err,book){
     if(err)
@@ -217,7 +219,7 @@ app.post("/book/:id/comment",function(req,res){
 
 //deleting book
 
-app.delete("/book/:id",function(req,res){
+app.delete("/book/:id", authController.protectRoute,checkOwnershipBook,function(req,res){
 
   Book.findByIdAndRemove(req.params.id,function(err,book){
     if(err){
@@ -238,7 +240,7 @@ app.delete("/book/:id",function(req,res){
 
 //reviews delete route for book
 
-app.delete("/book/:id/comments/:comment_id",function(req, res){
+app.delete("/book/:id/comments/:comment_id", authController.protectRoute,checkOwnershipComment,function(req, res){
 	
 	Comment.findByIdAndRemove(req.params.comment_id, function(err,comment){
 		if(err){
@@ -260,7 +262,7 @@ app.delete("/book/:id/comments/:comment_id",function(req, res){
 
 //add notes routes 
 
-app.post("/addnotes",upload.single("file"), function(req,res){
+app.post("/addnotes", authController.protectRoute,upload.single("file"), function(req,res){
 
   let note=req.body.note;
     note.author={
@@ -293,7 +295,7 @@ app.post("/addnotes",upload.single("file"), function(req,res){
 
 // creating comment route for notes
 
-app.post("/notes/:id/comment",function(req,res){
+app.post("/notes/:id/comment", authController.protectRoute,function(req,res){
 
   Notes.findById(req.params.id,function(err,book){
     if(err)
@@ -331,7 +333,7 @@ app.post("/notes/:id/comment",function(req,res){
 
 //deleting Notes
 
-app.delete("/book/:id",function(req,res){
+app.delete("/notes/:id", authController.protectRoute,checkOwnershipNotes,function(req,res){
 
   Notes.findByIdAndRemove(req.params.id,function(err,book){
     if(err){
@@ -352,7 +354,7 @@ app.delete("/book/:id",function(req,res){
 
 //reviews delete route for notes
 
-app.delete("/notes/:id/comments/:comment_id",function(req, res){
+app.delete("/notes/:id/comments/:comment_id", authController.protectRoute,checkOwnershipComment,function(req, res){
 	
 	Comment.findByIdAndRemove(req.params.comment_id, function(err,comment){
 		if(err){
@@ -369,6 +371,86 @@ app.delete("/notes/:id/comments/:comment_id",function(req, res){
 	
 });
 });
+
+
+//===================================
+//===========MiddleWares=============
+//===================================
+
+function checkOwnershipBook(req,res ,next){
+
+		Book.findById(req.params.id,function(err, book){
+		if(err){
+			console.log(err);
+			res.status(400).json({
+        message:err.message
+      });
+		}
+		else{
+			// does user own the campground
+			if(book.author.id.equals(req.user._id)){
+				//console.log("hey");
+				next();
+				
+			}else{
+				res.status(200).json({
+          message:"Access Denied"
+        });
+			}
+		}
+	});
+		
+}
+
+function checkOwnershipNotes(req,res ,next){	
+  Notes.findById(req.params.id,function(err, note){
+  if(err){
+    console.log(err);
+    res.status(400).json({
+      message:err.message
+    });
+  }
+  else{
+   
+    if(note.author.id.equals(req.user._id)){
+      next();
+      
+    }else{
+      res.status(200).json({
+        message:"Access Denied"
+      });
+    }
+  }
+});
+  
+}
+  
+function checkOwnershipComment(req, res, next){
+		Comment.findById(req.params.comment_id,function(err, comment){
+		if(err){
+      console.log(err);
+      res.status(400).json({
+        message:err.message
+      });
+		}
+		else{
+			if(comment.author.id.equals(req.user._id)){
+				next();
+				
+			}else{
+
+        res.status(200).json({
+          message:"Access Denied"
+        })
+			
+			}
+		}
+  });
+}
+		
+	
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(3000, () => {
